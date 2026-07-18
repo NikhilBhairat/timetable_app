@@ -138,26 +138,34 @@ class HistoryScreen extends StatelessWidget {
   }
 
   void _showDuplicateDialog(BuildContext context, Timetable timetable) {
-    showDialog(
+    _duplicateTimetable(context, timetable);
+  }
+
+  Future<void> _duplicateTimetable(BuildContext context, Timetable timetable) async {
+    final timetableProvider = context.read<TimetableProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    final selectedDate = await showDatePicker(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Duplicate Timetable'),
-        content: const Text('Select a new date for the duplicated timetable'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement duplicate logic
-            },
-            child: const Text('Duplicate'),
-          ),
-        ],
-      ),
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
     );
+
+    if (selectedDate == null || timetable.id == null) {
+      return;
+    }
+
+    try {
+      await timetableProvider.duplicateTimetable(timetable.id!, selectedDate);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Timetable duplicated successfully')),
+      );
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Failed to duplicate timetable')),
+      );
+    }
   }
 
   void _showDeleteDialog(BuildContext context, Timetable timetable) {
