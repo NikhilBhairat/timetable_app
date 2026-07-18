@@ -1,0 +1,45 @@
+name: timetable_app
+description: A comprehensive Flutter timetable management application.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  provider: ^6.0.0
+
+  # Database
+  sqflite: ^2.3.0
+  sqflite_common_ffi: ^2.3.4
+  path: ^1.8.3
+  path_provider: ^2.1.0
+
+  # UI & Utilities
+  intl: ^0.19.0
+
+  # Image & Export
+  screenshot: ^3.0.0
+  image_gallery_saver: ^2.0.2
+  share_plus: ^7.2.0
+
+  # Additional utilities
+  uuid: ^4.0.0
+  flutter_staggered_animations: ^1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/fonts/
