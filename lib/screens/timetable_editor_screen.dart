@@ -241,88 +241,87 @@ class _TimetableEditorScreenState extends State<TimetableEditorScreen> {
         const SizedBox(height: 8),
         if (isLoading) const LinearProgressIndicator(),
         if (isLoading) const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return Table(
-              border: TableBorder.all(color: Colors.black54, width: 1),
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              columnWidths: _buildColumnWidths(),
-              children: [
-                TableRow(
-                  decoration: BoxDecoration(color: Colors.grey.shade200),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Table(
+            border: TableBorder.all(color: Colors.black54, width: 1),
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            columnWidths: _buildColumnWidths(),
+            children: [
+              TableRow(
+                decoration: BoxDecoration(color: Colors.grey.shade200),
+                children: [
+                  const _TableHeaderCell('No.'),
+                  const _TableHeaderCell('From Time'),
+                  const _TableHeaderCell('To Time'),
+                  ..._selectedStandards.map((s) => _TableHeaderCell(s)),
+                  const _TableHeaderCell('Del'),
+                ],
+              ),
+              ...List.generate(_rows.length, (index) {
+                return TableRow(
                   children: [
-                    const _TableHeaderCell('No.'),
-                    const _TableHeaderCell('From Time'),
-                    const _TableHeaderCell('To Time'),
-                    ..._selectedStandards.map((s) => _TableHeaderCell(s)),
-                    const _TableHeaderCell('Del'),
+                    _TableBodyCell(
+                      child: Text(
+                        '${index + 1}',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    _TableBodyCell(
+                      child: _buildCellDropdown(
+                        value: _rows[index].fromTime,
+                        items: timeProvider.timeSlots.map((s) => s.time).toList(),
+                        placeholder: '--',
+                        onChanged: (value) {
+                          setState(() {
+                            _rows[index].fromTime = value ?? '';
+                          });
+                        },
+                      ),
+                    ),
+                    _TableBodyCell(
+                      child: _buildCellDropdown(
+                        value: _rows[index].toTime,
+                        items: timeProvider.timeSlots.map((s) => s.time).toList(),
+                        placeholder: '--',
+                        onChanged: (value) {
+                          setState(() {
+                            _rows[index].toTime = value ?? '';
+                          });
+                        },
+                      ),
+                    ),
+                    ..._selectedStandards.map(
+                      (standard) => _TableBodyCell(
+                        child: _buildCellDropdown(
+                          value: _rows[index].standardSubjects[standard] ?? '',
+                          items: subjectProvider.subjects.map((s) => s.name).toList(),
+                          placeholder: '--',
+                          onChanged: (value) {
+                            setState(() {
+                              _rows[index].standardSubjects[standard] = value ?? '';
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    _TableBodyCell(
+                      child: IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: _rows.length == 1
+                            ? null
+                            : () {
+                                setState(() {
+                                  _rows.removeAt(index);
+                                });
+                              },
+                      ),
+                    ),
                   ],
-                ),
-                ...List.generate(_rows.length, (index) {
-                  return TableRow(
-                    children: [
-                      _TableBodyCell(
-                        child: Text(
-                          '${index + 1}',
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      _TableBodyCell(
-                        child: _buildCellDropdown(
-                          value: _rows[index].fromTime,
-                          items: timeProvider.timeSlots.map((s) => s.time).toList(),
-                          placeholder: '--',
-                          onChanged: (value) {
-                            setState(() {
-                              _rows[index].fromTime = value ?? '';
-                            });
-                          },
-                        ),
-                      ),
-                      _TableBodyCell(
-                        child: _buildCellDropdown(
-                          value: _rows[index].toTime,
-                          items: timeProvider.timeSlots.map((s) => s.time).toList(),
-                          placeholder: '--',
-                          onChanged: (value) {
-                            setState(() {
-                              _rows[index].toTime = value ?? '';
-                            });
-                          },
-                        ),
-                      ),
-                      ..._selectedStandards.map(
-                        (standard) => _TableBodyCell(
-                          child: _buildCellDropdown(
-                            value: _rows[index].standardSubjects[standard] ?? '',
-                            items: subjectProvider.subjects.map((s) => s.name).toList(),
-                            placeholder: '--',
-                            onChanged: (value) {
-                              setState(() {
-                                _rows[index].standardSubjects[standard] = value ?? '';
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      _TableBodyCell(
-                        child: IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.red),
-                          onPressed: _rows.length == 1
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _rows.removeAt(index);
-                                  });
-                                },
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-              ],
-            );
-          },
+                );
+              }),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -336,13 +335,13 @@ class _TimetableEditorScreenState extends State<TimetableEditorScreen> {
   Map<int, TableColumnWidth> _buildColumnWidths() {
     final widths = <int, TableColumnWidth>{
       0: const FixedColumnWidth(56),
-      1: const FlexColumnWidth(2),
-      2: const FlexColumnWidth(2),
+      1: const FixedColumnWidth(170),
+      2: const FixedColumnWidth(170),
     };
 
     var colIndex = 3;
     for (int i = 0; i < _selectedStandards.length; i++) {
-      widths[colIndex] = const FlexColumnWidth(2);
+      widths[colIndex] = const FixedColumnWidth(220);
       colIndex++;
     }
 
