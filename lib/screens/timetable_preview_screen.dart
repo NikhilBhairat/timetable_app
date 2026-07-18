@@ -95,42 +95,54 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
                   Text(
                     widget.timetable.academyName!,
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
 
                 // Date
-                Text(
-                  'Date: ${DateTimeUtils.formatDate(widget.timetable.date)}',
-                  style: const TextStyle(fontSize: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey.shade50,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.blueGrey.shade100),
+                  ),
+                  child: Text(
+                    'Date: ${DateTimeUtils.formatDate(widget.timetable.date)}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
                 ),
                 const SizedBox(height: 24),
 
                 // Table
                 Table(
-                  border: TableBorder.all(color: Colors.black),
+                  border: TableBorder.all(color: Colors.blueGrey.shade400, width: 1),
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                   columnWidths: _buildPreviewColumnWidths(standards.length),
                   children: [
-                    // Header
                     TableRow(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                      ),
+                      decoration: BoxDecoration(color: Colors.blueGrey.shade100),
                       children: [
-                        _buildTableCell('From', isHeader: true),
-                        _buildTableCell('To', isHeader: true),
-                        ...standards.map((s) => _buildTableCell(s, isHeader: true)),
+                        _buildHeaderCell('No.'),
+                        _buildHeaderCell('From'),
+                        _buildHeaderCell('To'),
+                        ...standards.map(_buildHeaderCell),
                       ],
                     ),
-                    // Data rows
-                    ...gridRows.map((row) {
+                    ...List.generate(gridRows.length, (index) {
+                      final row = gridRows[index];
                       return TableRow(
+                        decoration: BoxDecoration(
+                          color: index.isEven ? Colors.white : Colors.blueGrey.shade50,
+                        ),
                         children: [
-                          _buildTableCell(row.fromTime),
-                          _buildTableCell(row.toTime),
-                          ...standards.map((s) => _buildTableCell(row.standardSubjects[s] ?? '--')),
+                          _buildBodyCell('${index + 1}'),
+                          _buildBodyCell(row.fromTime),
+                          _buildBodyCell(row.toTime),
+                          ...standards.map((s) => _buildBodyCell(row.standardSubjects[s] ?? '--')),
                         ],
                       );
                     }),
@@ -154,16 +166,31 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
     );
   }
 
-  Widget _buildTableCell(String text, {bool isHeader = false}) {
+  Widget _buildHeaderCell(String text) {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       child: Text(
-        text.isEmpty ? '--' : text,
-        style: TextStyle(
-          fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
-          fontSize: isHeader ? 14 : 12,
+        text,
+        style: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 13,
         ),
         textAlign: TextAlign.center,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildBodyCell(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+      child: Text(
+        text.isEmpty ? '--' : text,
+        style: const TextStyle(fontSize: 12.5),
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -226,13 +253,14 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
 
   Map<int, TableColumnWidth> _buildPreviewColumnWidths(int standardsCount) {
     final widths = <int, TableColumnWidth>{
-      0: const FlexColumnWidth(2),
-      1: const FlexColumnWidth(2),
+      0: const FixedColumnWidth(48),
+      1: const FlexColumnWidth(1.6),
+      2: const FlexColumnWidth(1.6),
     };
 
-    var column = 2;
+    var column = 3;
     for (int i = 0; i < standardsCount; i++) {
-      widths[column] = const FlexColumnWidth(2);
+      widths[column] = const FlexColumnWidth(2.2);
       column++;
     }
 
