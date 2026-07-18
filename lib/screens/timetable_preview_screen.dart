@@ -8,10 +8,20 @@ import 'dart:typed_data';
 import '../models/models.dart';
 import '../utils/utils.dart';
 
+enum PreviewInitialAction {
+  download,
+  share,
+}
+
 class TimetablePreviewScreen extends StatefulWidget {
   final Timetable timetable;
+  final PreviewInitialAction? initialAction;
 
-  const TimetablePreviewScreen({super.key, required this.timetable});
+  const TimetablePreviewScreen({
+    super.key,
+    required this.timetable,
+    this.initialAction,
+  });
 
   @override
   State<TimetablePreviewScreen> createState() => _TimetablePreviewScreenState();
@@ -25,6 +35,25 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
   void initState() {
     super.initState();
     _screenshotController = ScreenshotController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _runInitialAction();
+    });
+  }
+
+  Future<void> _runInitialAction() async {
+    switch (widget.initialAction) {
+      case PreviewInitialAction.download:
+        await _exportAsPng();
+        break;
+      case PreviewInitialAction.share:
+        await _shareImage();
+        break;
+      case null:
+        break;
+    }
   }
 
   @override
@@ -118,35 +147,39 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
                 const SizedBox(height: 24),
 
                 // Table
-                Table(
-                  border: TableBorder.all(color: Colors.blueGrey.shade400, width: 1),
-                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                  columnWidths: _buildPreviewColumnWidths(standards.length),
-                  children: [
-                    TableRow(
-                      decoration: BoxDecoration(color: Colors.blueGrey.shade100),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 900),
+                    child: Table(
+                      border: TableBorder.all(color: Colors.blueGrey.shade400, width: 1),
+                      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                      columnWidths: _buildPreviewColumnWidths(standards.length),
                       children: [
-                        _buildHeaderCell('No.'),
-                        _buildHeaderCell('From'),
-                        _buildHeaderCell('To'),
-                        ...standards.map(_buildHeaderCell),
+                        TableRow(
+                          decoration: BoxDecoration(color: Colors.blueGrey.shade100),
+                          children: [
+                            _buildHeaderCell('From'),
+                            _buildHeaderCell('To'),
+                            ...standards.map(_buildHeaderCell),
+                          ],
+                        ),
+                        ...List.generate(gridRows.length, (index) {
+                          final row = gridRows[index];
+                          return TableRow(
+                            decoration: BoxDecoration(
+                              color: index.isEven ? Colors.white : Colors.blueGrey.shade50,
+                            ),
+                            children: [
+                              _buildBodyCell(row.fromTime),
+                              _buildBodyCell(row.toTime),
+                              ...standards.map((s) => _buildBodyCell(row.standardSubjects[s] ?? '--')),
+                            ],
+                          );
+                        }),
                       ],
                     ),
-                    ...List.generate(gridRows.length, (index) {
-                      final row = gridRows[index];
-                      return TableRow(
-                        decoration: BoxDecoration(
-                          color: index.isEven ? Colors.white : Colors.blueGrey.shade50,
-                        ),
-                        children: [
-                          _buildBodyCell('${index + 1}'),
-                          _buildBodyCell(row.fromTime),
-                          _buildBodyCell(row.toTime),
-                          ...standards.map((s) => _buildBodyCell(row.standardSubjects[s] ?? '--')),
-                        ],
-                      );
-                    }),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -253,12 +286,11 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
 
   Map<int, TableColumnWidth> _buildPreviewColumnWidths(int standardsCount) {
     final widths = <int, TableColumnWidth>{
-      0: const FixedColumnWidth(48),
+      0: const FlexColumnWidth(1.6),
       1: const FlexColumnWidth(1.6),
-      2: const FlexColumnWidth(1.6),
     };
 
-    var column = 3;
+    var column = 2;
     for (int i = 0; i < standardsCount; i++) {
       widths[column] = const FlexColumnWidth(2.2);
       column++;

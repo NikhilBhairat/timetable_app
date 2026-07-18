@@ -77,6 +77,26 @@ class HistoryScreen extends StatelessWidget {
                         ),
                       ),
                       const PopupMenuItem(
+                        value: 'download',
+                        child: Row(
+                          children: [
+                            Icon(Icons.download),
+                            SizedBox(width: 8),
+                            Text('Download'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'share',
+                        child: Row(
+                          children: [
+                            Icon(Icons.share),
+                            SizedBox(width: 8),
+                            Text('Share'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [
@@ -130,6 +150,26 @@ class HistoryScreen extends StatelessWidget {
         break;
       case 'duplicate':
         _showDuplicateDialog(context, timetable);
+        break;
+      case 'download':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => TimetablePreviewScreen(
+              timetable: timetable,
+              initialAction: PreviewInitialAction.download,
+            ),
+          ),
+        );
+        break;
+      case 'share':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => TimetablePreviewScreen(
+              timetable: timetable,
+              initialAction: PreviewInitialAction.share,
+            ),
+          ),
+        );
         break;
       case 'delete':
         _showDeleteDialog(context, timetable);
