@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
 import 'dart:io';
+import 'dart:typed_data';
 import '../models/models.dart';
 import '../utils/utils.dart';
 
@@ -248,18 +250,12 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
     try {
       final image = await _screenshotController.capture();
       if (image != null) {
-        final result = await ImageGallerySaver.saveImage(
-          image,
-          quality: 100,
-          name: 'timetable_${widget.timetable.date.millisecondsSinceEpoch}.png',
-        );
+        final file = await _saveBytesToFile(image, 'png');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                result['isSuccess'] ? 'PNG saved successfully' : 'Failed to save PNG',
-              ),
+              content: Text('PNG saved: ${file.path}'),
             ),
           );
         }
@@ -287,18 +283,16 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
     try {
       final image = await _screenshotController.capture();
       if (image != null) {
-        final result = await ImageGallerySaver.saveImage(
-          image,
-          quality: 90,
-          name: 'timetable_${widget.timetable.date.millisecondsSinceEpoch}.jpg',
-        );
+        final decoded = img.decodeImage(image);
+        final jpgBytes = decoded == null
+            ? image
+            : Uint8List.fromList(img.encodeJpg(decoded, quality: 90));
+        final file = await _saveBytesToFile(jpgBytes, 'jpg');
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                result['isSuccess'] ? 'JPG saved successfully' : 'Failed to save JPG',
-              ),
+              content: Text('JPG saved: ${file.path}'),
             ),
           );
         }
@@ -348,6 +342,26 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
         });
       }
     }
+  }
+
+  Future<File> _saveBytesToFile(Uint8List bytes, String extension) async {
+    Directory targetDirectory;
+    try {
+      final appDirectory = await getApplicationDocumentsDirectory();
+      targetDirectory = Directory('${appDirectory.path}${Platform.pathSeparator}exports');
+    } catch (_) {
+      targetDirectory = Directory('${Directory.systemTemp.path}${Platform.pathSeparator}exports');
+    }
+
+    if (!await targetDirectory.exists()) {
+      await targetDirectory.create(recursive: true);
+    }
+
+    final file = File(
+      '${targetDirectory.path}${Platform.pathSeparator}timetable_${widget.timetable.date.millisecondsSinceEpoch}.$extension',
+    );
+    await file.writeAsBytes(bytes, flush: true);
+    return file;
   }
 
   @override

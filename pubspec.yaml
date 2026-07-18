@@ -25,7 +25,7 @@ dependencies:
 
   # Image & Export
   screenshot: ^3.0.0
-  image_gallery_saver: ^2.0.2
+  image: ^4.5.4
   share_plus: ^7.2.0
 
   # Additional utilities

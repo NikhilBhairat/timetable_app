@@ -33,37 +33,6 @@ jobs:
       - name: Analyze project
         run: flutter analyze --no-fatal-infos
 
-      - name: Patch image_gallery_saver namespace for AGP
-        shell: bash
-        run: |
-          PLUGIN_GRADLE_FILE=$(ls -d "$HOME/.pub-cache/hosted/pub.dev/image_gallery_saver-"*/android/build.gradle | head -n 1)
-          if [ -z "$PLUGIN_GRADLE_FILE" ]; then
-            echo "image_gallery_saver plugin gradle file not found"
-            exit 1
-          fi
-
-          echo "Patching: $PLUGIN_GRADLE_FILE"
-          if grep -q "namespace" "$PLUGIN_GRADLE_FILE"; then
-            echo "Namespace already present"
-          else
-            sed -i '/android {/a\    namespace "com.example.image_gallery_saver"' "$PLUGIN_GRADLE_FILE"
-            echo "Namespace injected"
-          fi
-
-          if grep -q "kotlinOptions" "$PLUGIN_GRADLE_FILE"; then
-            echo "Kotlin options already present"
-          else
-            sed -i '/android {/a\    kotlinOptions {\n        jvmTarget = "1.8"\n    }' "$PLUGIN_GRADLE_FILE"
-            echo "Kotlin JVM target injected"
-          fi
-
-          if grep -q "compileOptions" "$PLUGIN_GRADLE_FILE"; then
-            echo "Compile options already present"
-          else
-            sed -i '/android {/a\    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_1_8\n        targetCompatibility JavaVersion.VERSION_1_8\n    }' "$PLUGIN_GRADLE_FILE"
-            echo "Java compile target injected"
-          fi
-
       - name: Build release APK
         run: flutter build apk --release
 
