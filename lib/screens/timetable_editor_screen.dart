@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/providers.dart';
 import '../constants/constants.dart';
+import 'timetable_preview_screen.dart';
 
 class TimetableEditorScreen extends StatefulWidget {
   final Timetable? timetable;
@@ -110,6 +111,19 @@ class _TimetableEditorScreenState extends State<TimetableEditorScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.timetable == null ? 'Create Timetable' : 'Edit Timetable'),
+        actions: [
+          IconButton(
+            tooltip: 'View Timetable',
+            icon: const Icon(Icons.visibility),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => TimetablePreviewScreen(timetable: _buildTimetableFromForm()),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -227,87 +241,88 @@ class _TimetableEditorScreenState extends State<TimetableEditorScreen> {
         const SizedBox(height: 8),
         if (isLoading) const LinearProgressIndicator(),
         if (isLoading) const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Table(
-            border: TableBorder.all(color: Colors.black54, width: 1),
-            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-            columnWidths: _buildColumnWidths(),
-            children: [
-              TableRow(
-                decoration: BoxDecoration(color: Colors.grey.shade200),
-                children: [
-                  const _TableHeaderCell('No.'),
-                  const _TableHeaderCell('From Time'),
-                  const _TableHeaderCell('To Time'),
-                  ..._selectedStandards.map((s) => _TableHeaderCell(s)),
-                  const _TableHeaderCell('Del'),
-                ],
-              ),
-              ...List.generate(_rows.length, (index) {
-                return TableRow(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return Table(
+              border: TableBorder.all(color: Colors.black54, width: 1),
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              columnWidths: _buildColumnWidths(),
+              children: [
+                TableRow(
+                  decoration: BoxDecoration(color: Colors.grey.shade200),
                   children: [
-                    _TableBodyCell(
-                      child: Text(
-                        '${index + 1}',
-                        textAlign: TextAlign.center,
+                    const _TableHeaderCell('No.'),
+                    const _TableHeaderCell('From Time'),
+                    const _TableHeaderCell('To Time'),
+                    ..._selectedStandards.map((s) => _TableHeaderCell(s)),
+                    const _TableHeaderCell('Del'),
+                  ],
+                ),
+                ...List.generate(_rows.length, (index) {
+                  return TableRow(
+                    children: [
+                      _TableBodyCell(
+                        child: Text(
+                          '${index + 1}',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                    ),
-                    _TableBodyCell(
-                      child: _buildCellDropdown(
-                        value: _rows[index].fromTime,
-                        items: timeProvider.timeSlots.map((s) => s.time).toList(),
-                        placeholder: '--',
-                        onChanged: (value) {
-                          setState(() {
-                            _rows[index].fromTime = value ?? '';
-                          });
-                        },
-                      ),
-                    ),
-                    _TableBodyCell(
-                      child: _buildCellDropdown(
-                        value: _rows[index].toTime,
-                        items: timeProvider.timeSlots.map((s) => s.time).toList(),
-                        placeholder: '--',
-                        onChanged: (value) {
-                          setState(() {
-                            _rows[index].toTime = value ?? '';
-                          });
-                        },
-                      ),
-                    ),
-                    ..._selectedStandards.map(
-                      (standard) => _TableBodyCell(
+                      _TableBodyCell(
                         child: _buildCellDropdown(
-                          value: _rows[index].standardSubjects[standard] ?? '',
-                          items: subjectProvider.subjects.map((s) => s.name).toList(),
+                          value: _rows[index].fromTime,
+                          items: timeProvider.timeSlots.map((s) => s.time).toList(),
                           placeholder: '--',
                           onChanged: (value) {
                             setState(() {
-                              _rows[index].standardSubjects[standard] = value ?? '';
+                              _rows[index].fromTime = value ?? '';
                             });
                           },
                         ),
                       ),
-                    ),
-                    _TableBodyCell(
-                      child: IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        onPressed: _rows.length == 1
-                            ? null
-                            : () {
-                                setState(() {
-                                  _rows.removeAt(index);
-                                });
-                              },
+                      _TableBodyCell(
+                        child: _buildCellDropdown(
+                          value: _rows[index].toTime,
+                          items: timeProvider.timeSlots.map((s) => s.time).toList(),
+                          placeholder: '--',
+                          onChanged: (value) {
+                            setState(() {
+                              _rows[index].toTime = value ?? '';
+                            });
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                );
-              }),
-            ],
-          ),
+                      ..._selectedStandards.map(
+                        (standard) => _TableBodyCell(
+                          child: _buildCellDropdown(
+                            value: _rows[index].standardSubjects[standard] ?? '',
+                            items: subjectProvider.subjects.map((s) => s.name).toList(),
+                            placeholder: '--',
+                            onChanged: (value) {
+                              setState(() {
+                                _rows[index].standardSubjects[standard] = value ?? '';
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      _TableBodyCell(
+                        child: IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                          onPressed: _rows.length == 1
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _rows.removeAt(index);
+                                  });
+                                },
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 8),
         Text(
@@ -321,17 +336,17 @@ class _TimetableEditorScreenState extends State<TimetableEditorScreen> {
   Map<int, TableColumnWidth> _buildColumnWidths() {
     final widths = <int, TableColumnWidth>{
       0: const FixedColumnWidth(56),
-      1: const FixedColumnWidth(160),
-      2: const FixedColumnWidth(160),
+      1: const FlexColumnWidth(2),
+      2: const FlexColumnWidth(2),
     };
 
     var colIndex = 3;
     for (int i = 0; i < _selectedStandards.length; i++) {
-      widths[colIndex] = const FixedColumnWidth(210);
+      widths[colIndex] = const FlexColumnWidth(2);
       colIndex++;
     }
 
-    widths[colIndex] = const FixedColumnWidth(74);
+    widths[colIndex] = const FixedColumnWidth(64);
     return widths;
   }
 
@@ -446,6 +461,18 @@ class _TimetableEditorScreenState extends State<TimetableEditorScreen> {
   }
 
   void _saveTimetable() {
+    final timetable = _buildTimetableFromForm();
+
+    if (widget.timetable == null) {
+      context.read<TimetableProvider>().createTimetable(timetable);
+    } else {
+      context.read<TimetableProvider>().updateTimetable(timetable);
+    }
+
+    Navigator.of(context).pop();
+  }
+
+  Timetable _buildTimetableFromForm() {
     final serializedRows = <TimetableRow>[];
 
     if (_selectedStandards.isEmpty) {
@@ -473,7 +500,7 @@ class _TimetableEditorScreenState extends State<TimetableEditorScreen> {
       }
     }
 
-    final timetable = Timetable(
+    return Timetable(
       id: widget.timetable?.id,
       standard: _selectedStandards.join(', '),
       date: _selectedDate,
@@ -482,14 +509,6 @@ class _TimetableEditorScreenState extends State<TimetableEditorScreen> {
       createdAt: widget.timetable?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
-
-    if (widget.timetable == null) {
-      context.read<TimetableProvider>().createTimetable(timetable);
-    } else {
-      context.read<TimetableProvider>().updateTimetable(timetable);
-    }
-
-    Navigator.of(context).pop();
   }
 
   @override

@@ -109,35 +109,32 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
                 const SizedBox(height: 24),
 
                 // Table
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Table(
-                    border: TableBorder.all(color: Colors.black),
-                    columnWidths: _buildPreviewColumnWidths(standards.length),
-                    children: [
-                      // Header
-                      TableRow(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                        ),
-                        children: [
-                          _buildTableCell('From', isHeader: true),
-                          _buildTableCell('To', isHeader: true),
-                          ...standards.map((s) => _buildTableCell(s, isHeader: true)),
-                        ],
+                Table(
+                  border: TableBorder.all(color: Colors.black),
+                  columnWidths: _buildPreviewColumnWidths(standards.length),
+                  children: [
+                    // Header
+                    TableRow(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
                       ),
-                      // Data rows
-                      ...gridRows.map((row) {
-                        return TableRow(
-                          children: [
-                            _buildTableCell(row.fromTime),
-                            _buildTableCell(row.toTime),
-                            ...standards.map((s) => _buildTableCell(row.standardSubjects[s] ?? '--')),
-                          ],
-                        );
-                      }),
-                    ],
-                  ),
+                      children: [
+                        _buildTableCell('From', isHeader: true),
+                        _buildTableCell('To', isHeader: true),
+                        ...standards.map((s) => _buildTableCell(s, isHeader: true)),
+                      ],
+                    ),
+                    // Data rows
+                    ...gridRows.map((row) {
+                      return TableRow(
+                        children: [
+                          _buildTableCell(row.fromTime),
+                          _buildTableCell(row.toTime),
+                          ...standards.map((s) => _buildTableCell(row.standardSubjects[s] ?? '--')),
+                        ],
+                      );
+                    }),
+                  ],
                 ),
               ],
             ),
@@ -229,13 +226,13 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
 
   Map<int, TableColumnWidth> _buildPreviewColumnWidths(int standardsCount) {
     final widths = <int, TableColumnWidth>{
-      0: const FixedColumnWidth(120),
-      1: const FixedColumnWidth(120),
+      0: const FlexColumnWidth(2),
+      1: const FlexColumnWidth(2),
     };
 
     var column = 2;
     for (int i = 0; i < standardsCount; i++) {
-      widths[column] = const FixedColumnWidth(180);
+      widths[column] = const FlexColumnWidth(2);
       column++;
     }
 
@@ -345,13 +342,7 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
   }
 
   Future<File> _saveBytesToFile(Uint8List bytes, String extension) async {
-    Directory targetDirectory;
-    try {
-      final appDirectory = await getApplicationDocumentsDirectory();
-      targetDirectory = Directory('${appDirectory.path}${Platform.pathSeparator}exports');
-    } catch (_) {
-      targetDirectory = Directory('${Directory.systemTemp.path}${Platform.pathSeparator}exports');
-    }
+    final targetDirectory = await _resolveExportDirectory();
 
     if (!await targetDirectory.exists()) {
       await targetDirectory.create(recursive: true);
@@ -362,6 +353,34 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
     );
     await file.writeAsBytes(bytes, flush: true);
     return file;
+  }
+
+  Future<Directory> _resolveExportDirectory() async {
+    try {
+      if (Platform.isAndroid) {
+        final downloads = await getExternalStorageDirectories(type: StorageDirectory.downloads);
+        if (downloads != null && downloads.isNotEmpty) {
+          return Directory('${downloads.first.path}${Platform.pathSeparator}Timetable_app');
+        }
+
+        final external = await getExternalStorageDirectory();
+        if (external != null) {
+          return Directory('${external.path}${Platform.pathSeparator}Timetable_app');
+        }
+      }
+
+      if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        final downloads = await getDownloadsDirectory();
+        if (downloads != null) {
+          return Directory('${downloads.path}${Platform.pathSeparator}Timetable_app');
+        }
+      }
+
+      final docs = await getApplicationDocumentsDirectory();
+      return Directory('${docs.path}${Platform.pathSeparator}Timetable_app');
+    } catch (_) {
+      return Directory('${Directory.systemTemp.path}${Platform.pathSeparator}Timetable_app');
+    }
   }
 
   @override
