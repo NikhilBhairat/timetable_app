@@ -50,6 +50,20 @@ jobs:
             echo "Namespace injected"
           fi
 
+          if grep -q "kotlinOptions" "$PLUGIN_GRADLE_FILE"; then
+            echo "Kotlin options already present"
+          else
+            sed -i '/android {/a\    kotlinOptions {\n        jvmTarget = "1.8"\n    }' "$PLUGIN_GRADLE_FILE"
+            echo "Kotlin JVM target injected"
+          fi
+
+          if grep -q "compileOptions" "$PLUGIN_GRADLE_FILE"; then
+            echo "Compile options already present"
+          else
+            sed -i '/android {/a\    compileOptions {\n        sourceCompatibility JavaVersion.VERSION_1_8\n        targetCompatibility JavaVersion.VERSION_1_8\n    }' "$PLUGIN_GRADLE_FILE"
+            echo "Java compile target injected"
+          fi
+
       - name: Build release APK
         run: flutter build apk --release
 
