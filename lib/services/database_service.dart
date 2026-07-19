@@ -3,6 +3,284 @@ import 'package:path/path.dart';
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 
+final List<Map<String, Object?>> _defaultStandardsSeed = [
+  {'name': '5th', 'display_order': 0},
+  {'name': '6th', 'display_order': 1},
+  {'name': '7th', 'display_order': 2},
+  {'name': '8th', 'display_order': 3},
+  {'name': '9th', 'display_order': 4},
+  {'name': '10th', 'display_order': 5},
+  {'name': 'Abacus', 'display_order': 6},
+];
+
+final List<Map<String, Object?>> _defaultSubjectsSeed = [
+  {'name': '--', 'display_order': null},
+  {'name': 'Abacus', 'display_order': null},
+  {'name': 'Parents meet', 'display_order': null},
+  {'name': 'Hindi/Sanskrit', 'display_order': null},
+  {'name': 'Maths - 1', 'display_order': null},
+  {'name': 'Maths - 2', 'display_order': null},
+  {'name': 'Science - 1', 'display_order': null},
+  {'name': 'Science - 2', 'display_order': null},
+  {'name': 'Doubt clearing session - Maths', 'display_order': null},
+  {'name': 'Doubt clearing session - English (Ar)', 'display_order': null},
+  {'name': 'Doubt clearing session - Science', 'display_order': null},
+  {'name': 'Doubt clearing session - English (An)', 'display_order': null},
+  {'name': 'Maths', 'display_order': 0},
+  {'name': 'Maths (Sn)', 'display_order': 1},
+  {'name': 'Science', 'display_order': 2},
+  {'name': 'Science (Sn)', 'display_order': 3},
+  {'name': 'English (Ar)', 'display_order': 4},
+  {'name': 'English (An)', 'display_order': 5},
+  {'name': 'English (Sn)', 'display_order': 6},
+  {'name': 'English (N)', 'display_order': 7},
+  {'name': 'Sanskrit', 'display_order': 8},
+  {'name': 'Marathi', 'display_order': 9},
+  {'name': 'SST (An)', 'display_order': 10},
+  {'name': 'SST (N)', 'display_order': 11},
+  {'name': 'Hindi (Sn)', 'display_order': 12},
+  {'name': 'Hindi (An)', 'display_order': 13},
+  {'name': 'Geography (N)', 'display_order': 14},
+  {'name': 'Geography (An)', 'display_order': 15},
+  {'name': 'Exam', 'display_order': 16},
+  {'name': 'Holiday', 'display_order': 17},
+];
+
+final List<Map<String, Object?>> _defaultTimeSlotsSeed = [
+  {'time': '10.00 AM', 'display_order': null},
+  {'time': '11.00 AM', 'display_order': null},
+  {'time': '11.30 AM', 'display_order': null},
+  {'time': '01.00 PM', 'display_order': null},
+  {'time': '06:45 AM', 'display_order': 0},
+  {'time': '07:30 AM', 'display_order': 1},
+  {'time': '08:15 AM', 'display_order': 2},
+  {'time': '09:00 AM', 'display_order': 3},
+  {'time': '09:45 AM', 'display_order': 4},
+  {'time': '10:30 AM', 'display_order': 5},
+  {'time': '11:15 AM', 'display_order': 6},
+  {'time': '12:00 PM', 'display_order': 7},
+  {'time': '12:45 PM', 'display_order': 8},
+  {'time': '01:30 PM', 'display_order': 9},
+  {'time': '02:15 PM', 'display_order': 10},
+  {'time': '03:00 PM', 'display_order': 11},
+  {'time': '03:45 PM', 'display_order': 12},
+  {'time': '04:30 PM', 'display_order': 13},
+  {'time': '05:15 PM', 'display_order': 14},
+  {'time': '06:00 PM', 'display_order': 15},
+  {'time': '06:45 PM', 'display_order': 16},
+  {'time': '07:30 PM', 'display_order': 17},
+  {'time': '08:15 PM', 'display_order': 18},
+  {'time': '09:00 PM', 'display_order': 19},
+];
+
+final List<Map<String, Object?>> _defaultTimetablesSeed = [
+  {
+    'seed_key': 0,
+    'standard': '10th, 9th, 8th, 7th, 6th',
+    'date': '2026-07-18T12:46:25.232551',
+    'academy_name': 'VidyaNiketan Classes and Academy',
+    'created_at': '2026-07-18T12:47:26.471607',
+    'updated_at': '2026-07-18T13:04:55.344287'
+  },
+  {
+    'seed_key': 1,
+    'standard': '10th, 9th, 8th, 7th, 6th, Abacus',
+    'date': '2026-07-19T00:00:00.000',
+    'academy_name': 'VidyaNiketan Classes and Academy',
+    'created_at': '2026-07-18T18:40:24.375334',
+    'updated_at': '2026-07-18T19:02:33.315546'
+  },
+  {
+    'seed_key': 2,
+    'standard': '10th, 9th, 8th, 7th, 6th',
+    'date': '2026-07-20T00:00:00.000',
+    'academy_name': 'VidyaNiketan Classes and Academy',
+    'created_at': '2026-07-19T20:06:46.046279',
+    'updated_at': '2026-07-19T20:31:44.723530'
+  },
+];
+
+final List<Map<String, Object?>> _defaultTimetableRowsSeed = [
+  {
+    'seed_timetable_key': 0,
+    'from_time': '06:45 AM',
+    'to_time': '07:30 AM',
+    'subject': '10th|||English (Ar)'
+  },
+  {
+    'seed_timetable_key': 0,
+    'from_time': '06:45 AM',
+    'to_time': '07:30 AM',
+    'subject': '9th|||Hindi (Sn)'
+  },
+  {'seed_timetable_key': 0, 'from_time': '06:45 AM', 'to_time': '07:30 AM', 'subject': '8th|||'},
+  {'seed_timetable_key': 0, 'from_time': '06:45 AM', 'to_time': '07:30 AM', 'subject': '7th|||'},
+  {'seed_timetable_key': 0, 'from_time': '06:45 AM', 'to_time': '07:30 AM', 'subject': '6th|||'},
+  {
+    'seed_timetable_key': 0,
+    'from_time': '07:30 AM',
+    'to_time': '08:15 AM',
+    'subject': '10th|||Hindi (Sn)'
+  },
+  {
+    'seed_timetable_key': 0,
+    'from_time': '07:30 AM',
+    'to_time': '08:15 AM',
+    'subject': '9th|||English (Ar)'
+  },
+  {'seed_timetable_key': 0, 'from_time': '07:30 AM', 'to_time': '08:15 AM', 'subject': '8th|||'},
+  {'seed_timetable_key': 0, 'from_time': '07:30 AM', 'to_time': '08:15 AM', 'subject': '7th|||'},
+  {'seed_timetable_key': 0, 'from_time': '07:30 AM', 'to_time': '08:15 AM', 'subject': '6th|||'},
+  {
+    'seed_timetable_key': 0,
+    'from_time': '08:15 AM',
+    'to_time': '09:00 AM',
+    'subject': '10th|||Science'
+  },
+  {'seed_timetable_key': 0, 'from_time': '08:15 AM', 'to_time': '09:00 AM', 'subject': '9th|||Maths'},
+  {
+    'seed_timetable_key': 0,
+    'from_time': '08:15 AM',
+    'to_time': '09:00 AM',
+    'subject': '8th|||English (Ar)'
+  },
+  {
+    'seed_timetable_key': 0,
+    'from_time': '08:15 AM',
+    'to_time': '09:00 AM',
+    'subject': '7th|||Science (Sn)'
+  },
+  {'seed_timetable_key': 0, 'from_time': '08:15 AM', 'to_time': '09:00 AM', 'subject': '6th|||Marathi'},
+  {'seed_timetable_key': 0, 'from_time': '09:00 AM', 'to_time': '09:45 AM', 'subject': '10th|||'},
+  {'seed_timetable_key': 0, 'from_time': '09:00 AM', 'to_time': '09:45 AM', 'subject': '9th|||'},
+  {
+    'seed_timetable_key': 0,
+    'from_time': '09:00 AM',
+    'to_time': '09:45 AM',
+    'subject': '8th|||Science'
+  },
+  {'seed_timetable_key': 0, 'from_time': '09:00 AM', 'to_time': '09:45 AM', 'subject': '7th|||Marathi'},
+  {
+    'seed_timetable_key': 0,
+    'from_time': '09:00 AM',
+    'to_time': '09:45 AM',
+    'subject': '6th|||Science (Sn)'
+  },
+  {'seed_timetable_key': 1, 'from_time': '09:00 AM', 'to_time': '10.00 AM', 'subject': '10th|||Exam'},
+  {'seed_timetable_key': 1, 'from_time': '09:00 AM', 'to_time': '10.00 AM', 'subject': '9th|||Exam'},
+  {'seed_timetable_key': 1, 'from_time': '09:00 AM', 'to_time': '10.00 AM', 'subject': '8th|||Exam'},
+  {
+    'seed_timetable_key': 1,
+    'from_time': '09:00 AM',
+    'to_time': '10.00 AM',
+    'subject': '7th|||Hindi (Sn)'
+  },
+  {
+    'seed_timetable_key': 1,
+    'from_time': '09:00 AM',
+    'to_time': '10.00 AM',
+    'subject': '6th|||Hindi (Sn)'
+  },
+  {'seed_timetable_key': 1, 'from_time': '09:00 AM', 'to_time': '10.00 AM', 'subject': 'Abacus|||--'},
+  {'seed_timetable_key': 1, 'from_time': '10.00 AM', 'to_time': '11.00 AM', 'subject': '10th|||Exam'},
+  {'seed_timetable_key': 1, 'from_time': '10.00 AM', 'to_time': '11.00 AM', 'subject': '9th|||Exam'},
+  {'seed_timetable_key': 1, 'from_time': '10.00 AM', 'to_time': '11.00 AM', 'subject': '8th|||Exam'},
+  {
+    'seed_timetable_key': 1,
+    'from_time': '10.00 AM',
+    'to_time': '11.00 AM',
+    'subject': '7th|||English (Ar)'
+  },
+  {
+    'seed_timetable_key': 1,
+    'from_time': '10.00 AM',
+    'to_time': '11.00 AM',
+    'subject': '6th|||English (Ar)'
+  },
+  {'seed_timetable_key': 1, 'from_time': '10.00 AM', 'to_time': '11.00 AM', 'subject': 'Abacus|||Abacus'},
+  {
+    'seed_timetable_key': 1,
+    'from_time': '11.00 AM',
+    'to_time': '12:00 PM',
+    'subject': '10th|||Parents meet'
+  },
+  {'seed_timetable_key': 1, 'from_time': '11.00 AM', 'to_time': '12:00 PM', 'subject': '9th|||--'},
+  {'seed_timetable_key': 1, 'from_time': '11.00 AM', 'to_time': '12:00 PM', 'subject': '8th|||--'},
+  {'seed_timetable_key': 1, 'from_time': '11.00 AM', 'to_time': '12:00 PM', 'subject': '7th|||--'},
+  {'seed_timetable_key': 1, 'from_time': '11.00 AM', 'to_time': '12:00 PM', 'subject': '6th|||--'},
+  {'seed_timetable_key': 1, 'from_time': '11.00 AM', 'to_time': '12:00 PM', 'subject': 'Abacus|||--'},
+  {
+    'seed_timetable_key': 2,
+    'from_time': '06:45 AM',
+    'to_time': '07:30 AM',
+    'subject': '10th|||English (Ar)'
+  },
+  {
+    'seed_timetable_key': 2,
+    'from_time': '06:45 AM',
+    'to_time': '07:30 AM',
+    'subject': '9th|||Hindi/Sanskrit'
+  },
+  {'seed_timetable_key': 2, 'from_time': '06:45 AM', 'to_time': '07:30 AM', 'subject': '8th|||'},
+  {'seed_timetable_key': 2, 'from_time': '06:45 AM', 'to_time': '07:30 AM', 'subject': '7th|||'},
+  {'seed_timetable_key': 2, 'from_time': '06:45 AM', 'to_time': '07:30 AM', 'subject': '6th|||'},
+  {
+    'seed_timetable_key': 2,
+    'from_time': '07:30 AM',
+    'to_time': '08:15 AM',
+    'subject': '10th|||Hindi/Sanskrit'
+  },
+  {
+    'seed_timetable_key': 2,
+    'from_time': '07:30 AM',
+    'to_time': '08:15 AM',
+    'subject': '9th|||English (Ar)'
+  },
+  {'seed_timetable_key': 2, 'from_time': '07:30 AM', 'to_time': '08:15 AM', 'subject': '8th|||'},
+  {'seed_timetable_key': 2, 'from_time': '07:30 AM', 'to_time': '08:15 AM', 'subject': '7th|||'},
+  {'seed_timetable_key': 2, 'from_time': '07:30 AM', 'to_time': '08:15 AM', 'subject': '6th|||'},
+  {
+    'seed_timetable_key': 2,
+    'from_time': '08:15 AM',
+    'to_time': '09:00 AM',
+    'subject': '10th|||Science - 2'
+  },
+  {'seed_timetable_key': 2, 'from_time': '08:15 AM', 'to_time': '09:00 AM', 'subject': '9th|||Maths - 2'},
+  {
+    'seed_timetable_key': 2,
+    'from_time': '08:15 AM',
+    'to_time': '09:00 AM',
+    'subject': '8th|||English (Ar)'
+  },
+  {
+    'seed_timetable_key': 2,
+    'from_time': '08:15 AM',
+    'to_time': '09:00 AM',
+    'subject': '7th|||Science (Sn)'
+  },
+  {'seed_timetable_key': 2, 'from_time': '08:15 AM', 'to_time': '09:00 AM', 'subject': '6th|||Marathi'},
+  {
+    'seed_timetable_key': 2,
+    'from_time': '09:00 AM',
+    'to_time': '09:45 AM',
+    'subject': '10th|||Doubt clearing session - Maths'
+  },
+  {
+    'seed_timetable_key': 2,
+    'from_time': '09:00 AM',
+    'to_time': '09:45 AM',
+    'subject': '9th|||Doubt clearing session - English (Ar)'
+  },
+  {'seed_timetable_key': 2, 'from_time': '09:00 AM', 'to_time': '09:45 AM', 'subject': '8th|||Science'},
+  {'seed_timetable_key': 2, 'from_time': '09:00 AM', 'to_time': '09:45 AM', 'subject': '7th|||Marathi'},
+  {
+    'seed_timetable_key': 2,
+    'from_time': '09:00 AM',
+    'to_time': '09:45 AM',
+    'subject': '6th|||Science (Sn)'
+  },
+];
+
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
   static Database? _database;
@@ -99,47 +377,63 @@ class DatabaseService {
     await _insertDefaultSubjects(db);
     // Insert default time slots
     await _insertDefaultTimeSlots(db);
+    // Insert default timetables and rows
+    await _insertDefaultTimetables(db);
   }
 
   Future<void> _insertDefaultStandards(Database db) async {
-    final defaults = [
-      '5th', '6th', '7th', '8th', '9th', '10th', 'Abacus'
-    ];
-    for (int i = 0; i < defaults.length; i++) {
+    for (final standard in _defaultStandardsSeed) {
       await db.insert('standards', {
-        'name': defaults[i],
-        'display_order': i,
+        'name': standard['name'] as String,
+        'display_order': standard['display_order'],
       });
     }
   }
 
   Future<void> _insertDefaultSubjects(Database db) async {
-    final defaults = [
-      'Maths', 'Maths (Sn)', 'Science', 'Science (Sn)',
-      'English (Ar)', 'English (An)', 'English (Sn)', 'English (N)',
-      'Sanskrit', 'Marathi', 'SST (An)', 'SST (N)',
-      'Hindi (Sn)', 'Hindi (An)', 'Geography (N)', 'Geography (An)',
-      'Exam', 'Holiday'
-    ];
-    for (int i = 0; i < defaults.length; i++) {
+    for (final subject in _defaultSubjectsSeed) {
       await db.insert('subjects', {
-        'name': defaults[i],
-        'display_order': i,
+        'name': subject['name'] as String,
+        'display_order': subject['display_order'],
       });
     }
   }
 
   Future<void> _insertDefaultTimeSlots(Database db) async {
-    final defaults = [
-      '06:45 AM', '07:30 AM', '08:15 AM', '09:00 AM', '09:45 AM',
-      '10:30 AM', '11:15 AM', '12:00 PM', '12:45 PM', '01:30 PM',
-      '02:15 PM', '03:00 PM', '03:45 PM', '04:30 PM', '05:15 PM',
-      '06:00 PM', '06:45 PM', '07:30 PM', '08:15 PM', '09:00 PM'
-    ];
-    for (int i = 0; i < defaults.length; i++) {
+    for (final slot in _defaultTimeSlotsSeed) {
       await db.insert('time_slots', {
-        'time': defaults[i],
-        'display_order': i,
+        'time': slot['time'] as String,
+        'display_order': slot['display_order'],
+      });
+    }
+  }
+
+  Future<void> _insertDefaultTimetables(Database db) async {
+    final insertedIdsBySeedKey = <int, int>{};
+
+    for (final timetable in _defaultTimetablesSeed) {
+      final insertedId = await db.insert('timetables', {
+        'standard': timetable['standard'] as String,
+        'date': timetable['date'] as String,
+        'academy_name': timetable['academy_name'] as String,
+        'created_at': timetable['created_at'] as String,
+        'updated_at': timetable['updated_at'] as String,
+      });
+      insertedIdsBySeedKey[timetable['seed_key'] as int] = insertedId;
+    }
+
+    for (final row in _defaultTimetableRowsSeed) {
+      final seedKey = row['seed_timetable_key'] as int;
+      final timetableId = insertedIdsBySeedKey[seedKey];
+      if (timetableId == null) {
+        continue;
+      }
+
+      await db.insert('timetable_rows', {
+        'timetable_id': timetableId,
+        'from_time': row['from_time'] as String,
+        'to_time': row['to_time'] as String,
+        'subject': row['subject'] as String,
       });
     }
   }
