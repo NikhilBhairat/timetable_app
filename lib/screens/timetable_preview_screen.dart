@@ -377,9 +377,8 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
     try {
       final image = await _screenshotController.capture();
       if (image != null) {
-        final tempDir = Directory.systemTemp;
-        final file = File('${tempDir.path}/timetable.png');
-        await file.writeAsBytes(image);
+        // Reuse the same export pipeline so shared file matches generated image output.
+        final file = await _saveBytesToFile(image, 'png');
 
         await Share.shareXFiles(
           [XFile(file.path)],
