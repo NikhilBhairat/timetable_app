@@ -3,6 +3,7 @@ import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import '../models/models.dart';
@@ -305,14 +306,18 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
     });
 
     try {
-      final image = await _screenshotController.capture();
+      final image = await _captureTimetableImageBytes();
       if (image != null) {
         final file = await _saveBytesToFile(image, 'png');
+        await _saveToGalleryIfMobile(image, 'png');
 
         if (mounted) {
+          final destination = (Platform.isAndroid || Platform.isIOS)
+              ? '${file.path} and Gallery/Photos'
+              : file.path;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('PNG saved: ${file.path}'),
+              content: Text('PNG saved: $destination'),
             ),
           );
         }
@@ -338,18 +343,22 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
     });
 
     try {
-      final image = await _screenshotController.capture();
+      final image = await _captureTimetableImageBytes();
       if (image != null) {
         final decoded = img.decodeImage(image);
         final jpgBytes = decoded == null
             ? image
             : Uint8List.fromList(img.encodeJpg(decoded, quality: 90));
         final file = await _saveBytesToFile(jpgBytes, 'jpg');
+        await _saveToGalleryIfMobile(jpgBytes, 'jpg');
 
         if (mounted) {
+          final destination = (Platform.isAndroid || Platform.isIOS)
+              ? '${file.path} and Gallery/Photos'
+              : file.path;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('JPG saved: ${file.path}'),
+              content: Text('JPG saved: $destination'),
             ),
           );
         }
@@ -375,7 +384,7 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
     });
 
     try {
-      final image = await _screenshotController.capture();
+      final image = await _captureTimetableImageBytes();
       if (image != null) {
         // Reuse the same export pipeline so shared file matches generated image output.
         final file = await _saveBytesToFile(image, 'png');
@@ -398,6 +407,109 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
         });
       }
     }
+  }
+
+  Future<Uint8List?> _captureTimetableImageBytes() async {
+    final standards = _extractStandards();
+    final gridRows = _buildGridRows(standards);
+
+    final exportWidget = Material(
+      color: Colors.white,
+      child: Container(
+        color: Colors.white,
+        width: _calculateExportWidth(standards.length),
+        padding: const EdgeInsets.all(24),
+        child: _buildPrintableContent(standards, gridRows),
+      ),
+    );
+
+    final captured = await _screenshotController.captureFromLongWidget(
+      InheritedTheme.captureAll(context, exportWidget),
+      context: context,
+      delay: const Duration(milliseconds: 100),
+      pixelRatio: 2.5,
+    );
+
+    return Uint8List.fromList(captured);
+  }
+
+  Widget _buildPrintableContent(List<String> standards, List<_PreviewGridRow> gridRows) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (widget.timetable.academyName?.isNotEmpty ?? false)
+          Text(
+            widget.timetable.academyName!,
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.blueGrey.shade50,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.blueGrey.shade100),
+          ),
+          child: Text(
+            'Date: ${DateTimeUtils.formatDate(widget.timetable.date)}',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Table(
+          border: TableBorder.all(color: Colors.blueGrey.shade400, width: 1),
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          columnWidths: _buildPreviewColumnWidths(standards.length),
+          children: [
+            TableRow(
+              decoration: BoxDecoration(color: Colors.blueGrey.shade100),
+              children: [
+                _buildHeaderCell('From'),
+                _buildHeaderCell('To'),
+                ...standards.map(_buildHeaderCell),
+              ],
+            ),
+            ...List.generate(gridRows.length, (index) {
+              final row = gridRows[index];
+              return TableRow(
+                decoration: BoxDecoration(
+                  color: index.isEven ? Colors.white : Colors.blueGrey.shade50,
+                ),
+                children: [
+                  _buildBodyCell(row.fromTime),
+                  _buildBodyCell(row.toTime),
+                  ...standards.map((s) => _buildBodyCell(row.standardSubjects[s] ?? '--')),
+                ],
+              );
+            }),
+          ],
+        ),
+      ],
+    );
+  }
+
+  double _calculateExportWidth(int standardsCount) {
+    // Based on the preview proportions: two time columns plus one per standard.
+    const unit = 90.0;
+    final width = ((1.6 + 1.6 + (2.2 * standardsCount)) * unit) + 48;
+    return width < 900 ? 900 : width;
+  }
+
+  Future<void> _saveToGalleryIfMobile(Uint8List bytes, String extension) async {
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      return;
+    }
+
+    final fileName = 'timetable_${widget.timetable.date.millisecondsSinceEpoch}';
+    await ImageGallerySaver.saveImage(
+      bytes,
+      quality: 100,
+      name: fileName,
+    );
   }
 
   Future<File> _saveBytesToFile(Uint8List bytes, String extension) async {

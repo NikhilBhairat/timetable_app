@@ -112,11 +112,14 @@ class HistoryScreen extends StatelessWidget {
                     },
                   ),
                   onTap: () {
+                    final timetableProvider = context.read<TimetableProvider>();
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => TimetablePreviewScreen(timetable: timetable),
+                        builder: (context) => TimetableEditorScreen(timetable: timetable),
                       ),
-                    );
+                    ).then((_) {
+                      timetableProvider.loadTimetables();
+                    });
                   },
                 ),
               );
