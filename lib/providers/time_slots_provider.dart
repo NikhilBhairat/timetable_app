@@ -29,12 +29,19 @@ class TimeSlotsProvider extends ChangeNotifier {
   }
 
   List<TimeSlot> _getDefaultTimeSlots() {
-    final defaults = [
-      '06:45 AM', '07:30 AM', '08:15 AM', '09:00 AM', '09:45 AM',
-      '10:30 AM', '11:15 AM', '12:00 PM', '12:45 PM', '01:30 PM',
-      '02:15 PM', '03:00 PM', '03:45 PM', '04:30 PM', '05:15 PM',
-      '06:00 PM', '06:45 PM', '07:30 PM', '08:15 PM', '09:00 PM'
-    ];
+    const startMinutes = 6 * 60 + 45; // 06:45 AM
+    const endMinutes = 20 * 60 + 30; // 08:30 PM
+
+    final defaults = <String>[];
+    for (var totalMinutes = startMinutes; totalMinutes <= endMinutes; totalMinutes += 15) {
+      final hour24 = totalMinutes ~/ 60;
+      final minute = totalMinutes % 60;
+      final period = hour24 >= 12 ? 'PM' : 'AM';
+      final hour12 = hour24 % 12 == 0 ? 12 : hour24 % 12;
+      final minuteLabel = minute.toString().padLeft(2, '0');
+      defaults.add('${hour12.toString().padLeft(2, '0')}:$minuteLabel $period');
+    }
+
     return List.generate(defaults.length, (i) => TimeSlot(id: i + 1, time: defaults[i], displayOrder: i));
   }
 

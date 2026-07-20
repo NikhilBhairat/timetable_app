@@ -46,32 +46,34 @@ final List<Map<String, Object?>> _defaultSubjectsSeed = [
   {'name': 'Holiday', 'display_order': 17},
 ];
 
-final List<Map<String, Object?>> _defaultTimeSlotsSeed = [
-  {'time': '10.00 AM', 'display_order': null},
-  {'time': '11.00 AM', 'display_order': null},
-  {'time': '11.30 AM', 'display_order': null},
-  {'time': '01.00 PM', 'display_order': null},
-  {'time': '06:45 AM', 'display_order': 0},
-  {'time': '07:30 AM', 'display_order': 1},
-  {'time': '08:15 AM', 'display_order': 2},
-  {'time': '09:00 AM', 'display_order': 3},
-  {'time': '09:45 AM', 'display_order': 4},
-  {'time': '10:30 AM', 'display_order': 5},
-  {'time': '11:15 AM', 'display_order': 6},
-  {'time': '12:00 PM', 'display_order': 7},
-  {'time': '12:45 PM', 'display_order': 8},
-  {'time': '01:30 PM', 'display_order': 9},
-  {'time': '02:15 PM', 'display_order': 10},
-  {'time': '03:00 PM', 'display_order': 11},
-  {'time': '03:45 PM', 'display_order': 12},
-  {'time': '04:30 PM', 'display_order': 13},
-  {'time': '05:15 PM', 'display_order': 14},
-  {'time': '06:00 PM', 'display_order': 15},
-  {'time': '06:45 PM', 'display_order': 16},
-  {'time': '07:30 PM', 'display_order': 17},
-  {'time': '08:15 PM', 'display_order': 18},
-  {'time': '09:00 PM', 'display_order': 19},
-];
+final List<Map<String, Object?>> _defaultTimeSlotsSeed = _buildQuarterHourTimeSlotsSeed();
+
+List<Map<String, Object?>> _buildQuarterHourTimeSlotsSeed() {
+  const startMinutes = 6 * 60 + 45; // 06:45 AM
+  const endMinutes = 20 * 60 + 30; // 08:30 PM
+
+  final slots = <Map<String, Object?>>[];
+  var displayOrder = 0;
+
+  for (var totalMinutes = startMinutes; totalMinutes <= endMinutes; totalMinutes += 15) {
+    slots.add({
+      'time': _formatTimeLabel(totalMinutes),
+      'display_order': displayOrder,
+    });
+    displayOrder++;
+  }
+
+  return slots;
+}
+
+String _formatTimeLabel(int totalMinutes) {
+  final hour24 = totalMinutes ~/ 60;
+  final minute = totalMinutes % 60;
+  final period = hour24 >= 12 ? 'PM' : 'AM';
+  final hour12 = hour24 % 12 == 0 ? 12 : hour24 % 12;
+  final minuteLabel = minute.toString().padLeft(2, '0');
+  return '${hour12.toString().padLeft(2, '0')}:$minuteLabel $period';
+}
 
 final List<Map<String, Object?>> _defaultTimetablesSeed = [
   {
@@ -312,11 +314,14 @@ class DatabaseService {
 
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, 'timetable_app.db');
-    return await openDatabase(
+    final db = await openDatabase(
       path,
       version: 1,
       onCreate: _createTables,
     );
+    await _ensureDefaultTimeSlots(db);
+    await _normalizeTimeSlotOrdering(db);
+    return db;
   }
 
   Future<void> _createTables(Database db, int version) async {
@@ -406,6 +411,89 @@ class DatabaseService {
         'display_order': slot['display_order'],
       });
     }
+  }
+
+  Future<void> _ensureDefaultTimeSlots(Database db) async {
+    for (final slot in _defaultTimeSlotsSeed) {
+      final time = slot['time'] as String;
+      final displayOrder = slot['display_order'];
+
+      final existing = await db.query(
+        'time_slots',
+        columns: ['id'],
+        where: 'time = ?',
+        whereArgs: [time],
+        limit: 1,
+      );
+
+      if (existing.isEmpty) {
+        await db.insert('time_slots', {
+          'time': time,
+          'display_order': displayOrder,
+        });
+      }
+    }
+  }
+
+  Future<void> _normalizeTimeSlotOrdering(Database db) async {
+    final slots = await db.query('time_slots', columns: ['id', 'time', 'display_order']);
+    if (slots.isEmpty) {
+      return;
+    }
+
+    final sorted = [...slots]
+      ..sort((a, b) {
+        final aMinutes = _parseTimeToMinutes(a['time'] as String);
+        final bMinutes = _parseTimeToMinutes(b['time'] as String);
+        if (aMinutes != bMinutes) {
+          return aMinutes.compareTo(bMinutes);
+        }
+
+        final aOrder = a['display_order'] as int?;
+        final bOrder = b['display_order'] as int?;
+        if (aOrder != null && bOrder != null && aOrder != bOrder) {
+          return aOrder.compareTo(bOrder);
+        }
+
+        return (a['id'] as int).compareTo(b['id'] as int);
+      });
+
+    for (int i = 0; i < sorted.length; i++) {
+      final id = sorted[i]['id'] as int;
+      await db.update(
+        'time_slots',
+        {'display_order': i},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
+  }
+
+  int _parseTimeToMinutes(String timeLabel) {
+    final normalized = timeLabel.trim().replaceAll('.', ':').toUpperCase();
+    final match = RegExp(r'^(\d{1,2}):(\d{2})\s*(AM|PM)$').firstMatch(normalized);
+    if (match == null) {
+      return 1 << 30;
+    }
+
+    final hourRaw = int.tryParse(match.group(1) ?? '');
+    final minute = int.tryParse(match.group(2) ?? '');
+    final period = match.group(3);
+
+    if (hourRaw == null || minute == null || period == null || minute < 0 || minute > 59) {
+      return 1 << 30;
+    }
+
+    if (hourRaw < 1 || hourRaw > 12) {
+      return 1 << 30;
+    }
+
+    var hour24 = hourRaw % 12;
+    if (period == 'PM') {
+      hour24 += 12;
+    }
+
+    return (hour24 * 60) + minute;
   }
 
   Future<void> _insertDefaultTimetables(Database db) async {
@@ -591,7 +679,22 @@ class DatabaseService {
 
   Future<List<TimeSlot>> getAllTimeSlots() async {
     final db = await database;
-    final maps = await db.query('time_slots', orderBy: 'display_order');
+    final maps = await db.query('time_slots');
+    maps.sort((a, b) {
+      final aMinutes = _parseTimeToMinutes(a['time'] as String);
+      final bMinutes = _parseTimeToMinutes(b['time'] as String);
+      if (aMinutes != bMinutes) {
+        return aMinutes.compareTo(bMinutes);
+      }
+
+      final aOrder = a['display_order'] as int?;
+      final bOrder = b['display_order'] as int?;
+      if (aOrder != null && bOrder != null && aOrder != bOrder) {
+        return aOrder.compareTo(bOrder);
+      }
+
+      return (a['id'] as int).compareTo(b['id'] as int);
+    });
     return List.generate(maps.length, (i) => TimeSlot.fromMap(maps[i]));
   }
 
