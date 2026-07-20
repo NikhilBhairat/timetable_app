@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import '../models/models.dart';
 import '../utils/utils.dart';
 
@@ -29,6 +28,7 @@ class TimetablePreviewScreen extends StatefulWidget {
 }
 
 class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
+  static const MethodChannel _galleryChannel = MethodChannel('timetable_app/gallery_saver');
   late ScreenshotController _screenshotController;
   bool _isExporting = false;
 
@@ -500,16 +500,16 @@ class _TimetablePreviewScreenState extends State<TimetablePreviewScreen> {
   }
 
   Future<void> _saveToGalleryIfMobile(Uint8List bytes, String extension) async {
-    if (!Platform.isAndroid && !Platform.isIOS) {
+    if (!Platform.isAndroid) {
       return;
     }
 
     final fileName = 'timetable_${widget.timetable.date.millisecondsSinceEpoch}';
-    await ImageGallerySaver.saveImage(
-      bytes,
-      quality: 100,
-      name: fileName,
-    );
+    await _galleryChannel.invokeMethod('saveImage', {
+      'bytes': bytes,
+      'fileName': '$fileName.$extension',
+      'mimeType': extension.toLowerCase() == 'jpg' ? 'image/jpeg' : 'image/png',
+    });
   }
 
   Future<File> _saveBytesToFile(Uint8List bytes, String extension) async {
